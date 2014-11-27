@@ -398,7 +398,8 @@ bool ExceptionHandler::HandleSignal(int sig, siginfo_t* info, void* uc) {
   bool signal_pid_trusted = info->si_code == SI_USER ||
       info->si_code == SI_TKILL;
   if (signal_trusted || (signal_pid_trusted && info->si_pid == getpid())) {
-    sys_prctl(PR_SET_DUMPABLE, 1, 0, 0, 0);
+    //sys_prctl(PR_SET_DUMPABLE, 1, 0, 0, 0);
+    sys_prctl(PR_SET_DUMPABLE, 1);
   }
   CrashContext context;
   // Fill in all the holes in the struct to make Valgrind happy.
@@ -496,7 +497,8 @@ bool ExceptionHandler::GenerateDump(CrashContext *context) {
   }
 
   // Allow the child to ptrace us
-  sys_prctl(PR_SET_PTRACER, child, 0, 0, 0);
+  //sys_prctl(PR_SET_PTRACER, child, 0, 0, 0);
+  sys_prctl(PR_SET_PTRACER, child);
   SendContinueSignalToChild();
   int status;
   const int r = HANDLE_EINTR(sys_waitpid(child, &status, __WALL));
@@ -606,7 +608,8 @@ bool ExceptionHandler::WriteMinidump() {
   }
 
   // Allow this process to be dumped.
-  sys_prctl(PR_SET_DUMPABLE, 1, 0, 0, 0);
+  //sys_prctl(PR_SET_DUMPABLE, 1, 0, 0, 0);
+  sys_prctl(PR_SET_DUMPABLE, 1);
 
   CrashContext context;
   int getcontext_result = getcontext(&context.context);
