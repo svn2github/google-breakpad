@@ -78,6 +78,36 @@ dist_doc_DATA = \
 	NEWS \
 	README
 
+## Headers
+if LINUX_HOST
+includeclhdir = $(includedir)/$(PACKAGE)/client/linux/handler
+includeclh_HEADERS = $(top_srcdir)/src/client/linux/handler/*.h
+
+includeclmdir = $(includedir)/$(PACKAGE)/client/linux/minidump_writer
+includeclm_HEADERS = $(top_srcdir)/src/client/linux/minidump_writer/*.h
+
+includeclcdir = $(includedir)/$(PACKAGE)/client/linux/crash_generation
+includeclc_HEADERS = $(top_srcdir)/src/client/linux/crash_generation/*.h
+
+includelssdir = $(includedir)/$(PACKAGE)/third_party/lss
+includelss_HEADERS = $(top_srcdir)/src/third_party/lss/*.h
+
+includecldir = $(includedir)/$(PACKAGE)/common/linux
+includecl_HEADERS = $(top_srcdir)/src/common/linux/*.h
+endif
+
+includegbcdir = $(includedir)/$(PACKAGE)/google_breakpad/common
+includegbc_HEADERS = $(top_srcdir)/src/google_breakpad/common/*.h
+
+includecdir = $(includedir)/$(PACKAGE)/common
+includec_HEADERS = $(top_srcdir)/src/common/*.h
+
+includepdir = $(includedir)/$(PACKAGE)/processor
+includep_HEADERS = $(top_srcdir)/src/processor/*.h
+
+## pkgconfig files
+pkgconfigdir = $(libdir)/pkgconfig
+pkgconfig_DATA =
 
 ## Libraries
 noinst_LIBRARIES =
@@ -87,18 +117,24 @@ check_PROGRAMS =
 
 if !DISABLE_PROCESSOR
 lib_LIBRARIES += src/libbreakpad.a
+pkgconfig_DATA += breakpad.pc
 noinst_LIBRARIES += src/third_party/libdisasm/libdisasm.a
 endif
 
 if LINUX_HOST
 lib_LIBRARIES += src/client/linux/libbreakpad_client.a
+pkgconfig_DATA += breakpad-client.pc
 
 src_client_linux_libbreakpad_client_a_SOURCES = \
 	src/client/linux/crash_generation/crash_generation_client.cc \
 	src/client/linux/crash_generation/crash_generation_server.cc \
+	src/client/linux/dump_writer_common/seccomp_unwinder.cc \
+	src/client/linux/dump_writer_common/thread_info.cc \
+	src/client/linux/dump_writer_common/ucontext_reader.cc \
 	src/client/linux/handler/exception_handler.cc \
 	src/client/linux/handler/minidump_descriptor.cc \
 	src/client/linux/log/log.cc \
+	src/client/linux/microdump_writer/microdump_writer.cc \
 	src/client/linux/minidump_writer/linux_dumper.cc \
 	src/client/linux/minidump_writer/linux_ptrace_dumper.cc \
 	src/client/linux/minidump_writer/minidump_writer.cc \
@@ -127,11 +163,15 @@ src_libbreakpad_a_SOURCES = \
 	src/google_breakpad/processor/call_stack.h \
 	src/google_breakpad/processor/code_module.h \
 	src/google_breakpad/processor/code_modules.h \
+	src/google_breakpad/processor/dump_context.h \
+	src/google_breakpad/processor/dump_object.h \
 	src/google_breakpad/processor/exploitability.h \
 	src/google_breakpad/processor/fast_source_line_resolver.h \
 	src/google_breakpad/processor/memory_region.h \
+        src/google_breakpad/processor/microdump_processor.h \
 	src/google_breakpad/processor/minidump.h \
 	src/google_breakpad/processor/minidump_processor.h \
+	src/google_breakpad/processor/process_result.h \
 	src/google_breakpad/processor/process_state.h \
 	src/google_breakpad/processor/source_line_resolver_base.h \
 	src/google_breakpad/processor/source_line_resolver_interface.h \
@@ -157,6 +197,8 @@ src_libbreakpad_a_SOURCES = \
 	src/processor/contained_range_map.h \
 	src/processor/disassembler_x86.h \
 	src/processor/disassembler_x86.cc \
+	src/processor/dump_context.cc \
+	src/processor/dump_object.cc \
 	src/processor/exploitability.cc \
 	src/processor/exploitability_linux.h \
 	src/processor/exploitability_linux.cc \
@@ -169,6 +211,7 @@ src_libbreakpad_a_SOURCES = \
 	src/processor/logging.cc \
 	src/processor/map_serializers-inl.h \
 	src/processor/map_serializers.h \
+        src/processor/microdump_processor.cc \
 	src/processor/minidump.cc \
 	src/processor/minidump_processor.cc \
 	src/processor/module_comparer.cc \
@@ -288,6 +331,7 @@ check_PROGRAMS += \
 	src/processor/exploitability_unittest \
 	src/processor/fast_source_line_resolver_unittest \
 	src/processor/map_serializers_unittest \
+        src/processor/microdump_processor_unittest \
 	src/processor/minidump_processor_unittest \
 	src/processor/minidump_unittest \
 	src/processor/static_address_map_unittest \
@@ -380,6 +424,8 @@ src_client_linux_linux_client_unittest_shlib_SOURCES = \
 	src/testing/gtest/src/gtest_main.cc \
 	src/testing/src/gmock-all.cc \
 	src/processor/basic_code_modules.cc \
+	src/processor/dump_context.cc \
+	src/processor/dump_object.cc \
 	src/processor/logging.cc \
 	src/processor/minidump.cc \
 	src/processor/pathname_stripper.cc
@@ -398,10 +444,14 @@ src_client_linux_linux_client_unittest_shlib_LDFLAGS = \
 	-shared \
 	-Wl,-h,linux_client_unittest_shlib
 src_client_linux_linux_client_unittest_shlib_LDADD = \
+	src/client/linux/crash_generation/crash_generation_client.o \
+	src/client/linux/dump_writer_common/seccomp_unwinder.o \
+	src/client/linux/dump_writer_common/thread_info.o \
+	src/client/linux/dump_writer_common/ucontext_reader.o \
 	src/client/linux/handler/exception_handler.o \
 	src/client/linux/handler/minidump_descriptor.o \
 	src/client/linux/log/log.o \
-	src/client/linux/crash_generation/crash_generation_client.o \
+	src/client/linux/microdump_writer/microdump_writer.o \
 	src/client/linux/minidump_writer/linux_dumper.o \
 	src/client/linux/minidump_writer/linux_ptrace_dumper.o \
 	src/client/linux/minidump_writer/minidump_writer.o \
@@ -644,6 +694,8 @@ src_processor_exploitability_unittest_LDADD = \
 	src/processor/basic_source_line_resolver.o \
 	src/processor/call_stack.o \
 	src/processor/cfi_frame_info.o \
+	src/processor/dump_context.o \
+	src/processor/dump_object.o \
 	src/processor/logging.o \
 	src/processor/minidump.o \
 	src/processor/pathname_stripper.o \
@@ -718,6 +770,19 @@ src_processor_map_serializers_unittest_LDADD = \
 	src/processor/pathname_stripper.o \
 	$(PTHREAD_CFLAGS) $(PTHREAD_LIBS)
 
+src_processor_microdump_processor_unittest_SOURCES = \
+  src/processor/microdump_processor_unittest.cc \
+  src/testing/gtest/src/gtest-all.cc \
+  src/testing/src/gmock-all.cc
+src_processor_microdump_processor_unittest_CPPFLAGS = \
+  -I$(top_srcdir)/src \
+  -I$(top_srcdir)/src/testing/include \
+  -I$(top_srcdir)/src/testing/gtest/include \
+  -I$(top_srcdir)/src/testing/gtest \
+  -I$(top_srcdir)/src/testing
+src_processor_microdump_processor_unittest_LDADD = \
+  $(PTHREAD_CFLAGS) $(PTHREAD_LIBS)
+
 src_processor_minidump_processor_unittest_SOURCES = \
 	src/processor/minidump_processor_unittest.cc \
 	src/testing/gtest/src/gtest-all.cc \
@@ -734,6 +799,8 @@ src_processor_minidump_processor_unittest_LDADD = \
 	src/processor/call_stack.o \
 	src/processor/cfi_frame_info.o \
 	src/processor/disassembler_x86.o \
+	src/processor/dump_context.o \
+	src/processor/dump_object.o \
 	src/processor/exploitability.o \
 	src/processor/exploitability_linux.o \
 	src/processor/exploitability_win.o \
@@ -774,6 +841,8 @@ src_processor_minidump_unittest_CPPFLAGS = \
 	-I$(top_srcdir)/src/testing
 src_processor_minidump_unittest_LDADD = \
 	src/processor/basic_code_modules.o \
+	src/processor/dump_context.o \
+	src/processor/dump_object.o \
 	src/processor/logging.o \
 	src/processor/minidump.o \
 	src/processor/pathname_stripper.o \
@@ -1024,6 +1093,8 @@ src_processor_minidump_dump_SOURCES = \
 	src/processor/minidump_dump.cc
 src_processor_minidump_dump_LDADD = \
 	src/processor/basic_code_modules.o \
+	src/processor/dump_context.o \
+	src/processor/dump_object.o \
 	src/processor/logging.o \
 	src/processor/minidump.o \
 	src/processor/pathname_stripper.o
@@ -1037,6 +1108,8 @@ src_processor_minidump_stackwalk_LDADD = \
 	src/processor/call_stack.o \
 	src/processor/cfi_frame_info.o \
 	src/processor/disassembler_x86.o \
+	src/processor/dump_context.o \
+	src/processor/dump_object.o \
 	src/processor/exploitability.o \
 	src/processor/exploitability_linux.o \
 	src/processor/exploitability_win.o \
